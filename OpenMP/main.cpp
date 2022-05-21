@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
 #include <cstdlib>
 #include <sstream>
 #include <fstream>
@@ -10,7 +12,7 @@
 using namespace std;
 
             
-int main(){
+int main(int argc, char *argv[]){
     ifstream archivo(pruebas);
     fstream CreateFile("resultado.csv",ios::out);
     CreateFile<<"ID;Correctas;Incorrectas;Omitidas;Puntaje;Nota"<<endl;
@@ -22,7 +24,9 @@ int main(){
     string buenas[]= {"\"A\"","\"E\"","\"C\"","\"B\"","\"B\"","\"D\"","\"A\"","\"B\"","\"E\"","\"C\"","\"B\"","\"D\""};
 
     #pragma omp parallel
-        #pragma omp single nowait
+    {
+        #pragma omp barrier
+        {
         while(getline(archivo,linea)){
             string Resultados[6];
             stringstream stream (linea);   //Convertir cadena en un stream
@@ -44,7 +48,8 @@ int main(){
             getline(stream,p11,delimitador);
             getline(stream,p12,delimitador);
             string respuestas[12]={p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12};
-            #pragma omp task first private(archivo)
+            #pragma omp for
+            {
             for (int x=0;x<12;x++){
                 if (buenas[x]==respuestas[x])
                     correctas+=1;
@@ -53,17 +58,16 @@ int main(){
                         omitidas+=1;
                     else
                         malas+=1;
+                   }
             }
-                
-        }
+            }
+        
         puntaje= correctas*0.5 - malas*0.12;
         nota= 1+puntaje;
         nota= roundf(nota*10)/10;
         CreateFile<<alumno<<";"<<correctas<<";"<<malas<<";"<<omitidas<<";"<<puntaje<<";"<<nota<<endl;
-    }    
-
-    archivo.close();
-    
-    
+        }
+    }
     return 0;
+    }
 }
